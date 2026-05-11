@@ -29,11 +29,24 @@ using namespace std;
 //     train_images.read(reinterpret_cast<char*>(&training_images_magical), )
 // }
 
-DataFiles Dataset::find_files() {
-     filesystem::path path = filesystem::read_symlink("/proc/self/exe")
-}
+// Dataset::Dataset(const std::string& dataset_name) : dataset_name_(dataset_name) {
+//     filesystem::path path = filesystem::read_symlink("/proc/self/exe").remove_filename().parent_path();
+//     path /= "data";
+//     path /= dataset_name_;
+//     if (!filesystem::exists(path)) {
+//         throw filesystem::filesystem_error("Dataset does not exist in /data/ catalog.",
+//             path, std::make_error_code(std::errc::no_such_file_or_directory));
+//     }
+// };
+//
+// DataFiles Dataset::find_files() {
+//     for (auto file : data_path_) {
+//
+//     }
 
-void Dataset::load_data() {
+//}
+
+void Dataset::load_dataset() {
 
     //find_files();
 
@@ -93,6 +106,27 @@ void Dataset::load_data() {
         }
 
     }
+}
+
+void Dataset::load_custom() {
+    filesystem::path custom_path = data_path_;
+    custom_path /= "custom/";
+
+    for (const auto& entry : filesystem::directory_iterator(custom_path)) {
+        ifstream file(entry.path(), std::ios::binary);
+
+        int magic, width, height, max;
+        file >> magic;
+        file >> width;
+        file >> height;
+        file >> max;
+
+        file.ignore(1);
+
+        if (max > 255) {
+
+        }
+        }
 }
 
 void Dataset::shuffle() {

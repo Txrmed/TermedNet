@@ -18,18 +18,12 @@
 
 using namespace std;
 
-/*
- * @brief Network Constructor
- *
- * @param neurons Vector of unsigned ints representing the amount of neurons in the i-th layer.
- * @param parameters Hyperparams struct with hyperparameters of the network.
- * @param dataset Dataset object with MNIST data.
- */
+
 Network::Network(const vector<unsigned int>& neurons, const Hyperparams& parameters, const Dataset& dataset) : dataset_(dataset),
     parameters_(parameters), layers_(neurons.size()), neurons_(neurons) {
 
     cout << "Loading data" << endl;
-    dataset_.load_data();
+    dataset_.load_dataset();
     cout << "Finished loading data." << endl;
 
     // Initialize biases and weights vectors to random values.
@@ -46,13 +40,7 @@ Network::Network(const vector<unsigned int>& neurons, const Hyperparams& paramet
     }
 };
 
-/*
- * @brief Use SGD to calculate delta_weights an delta_biases for each bias and each weight in the network.
- *
- * @param state NetworkState struct representing the state of the network after feedforwarding an input.
- *
- * @returns Deltas struct containing a vector of delta_weights and delta_biases to be applied to each weight matrix and bias matrix respectively.
- */
+
 Deltas Network::backpropagation(const NetworkState& state) {
 
     Deltas d;
@@ -92,16 +80,8 @@ Deltas Network::backpropagation(const NetworkState& state) {
 }
 
 
-/*
- * @brief Input an image into the network.
- *
- * @param input A Eigen::Vector of floats representing the pixels.
- * @param label The correct clasification.
- *
- * @returns NetworkState struct with activations and z's for each layer, the output of the network, and the label (correct clasification).
- *
- */
-NetworkState Network::feedforward(const Eigen::VectorXf& input, unsigned int label) const {
+
+NetworkState Network::feedforward(Eigen::Ref<const Eigen::VectorXf> input, unsigned int label) const {
 
     vector<Eigen::VectorXf> zs;
     zs.reserve(layers_);
@@ -138,41 +118,7 @@ NetworkState Network::feedforward(const Eigen::VectorXf& input, unsigned int lab
     return state;
 }
 
-/*
- * @brief Tests the model against n randomly selected test images from the dataset.
- *
- * @param n Amount of testing images to be used.
- *
- * @returns The amount of correctly classified images.
- */
-unsigned int Network::test_model(unsigned int n) const {
-    Eigen::MatrixXf tests = dataset_.get_testing_data(n);
 
-    unsigned int correct = 0;
-
-    for (int image_i = 0; image_i < n; image_i++) {
-        // 1. Extract label and image data
-        int label = static_cast<int>(tests(0, image_i));
-
-        // Feedforward data and get the state of the network.
-        Eigen::VectorXf image_data = tests.block(1, image_i, PIXEL_COUNT, 1);
-        NetworkState state = feedforward(image_data, label);
-
-        // Get index of the highest activation.
-        Eigen::Index predicted_label;
-        state.output.maxCoeff(&predicted_label);
-
-        // Compare prediciton to label.
-        if (static_cast<unsigned int>(predicted_label) == label) {
-            correct++;
-        }
-    }
-    return correct;
-}
-
-/*
- *@brief Train the neural network based using SGD, on the dataset and hyperparameters.
- */
 void Network::train() {
     // Calculate how many mini batches fit inside one epoch.
     const unsigned int num_mini_batches = parameters_.num_learning_img / parameters_.mini_batch_size;
@@ -205,7 +151,7 @@ void Network::train() {
             // Iterate over images in one mini batch
             for (int data_i = 0; data_i < parameters_.mini_batch_size; data_i++) {
 
-                NetworkState state = feedforward(mini_batch.block(1, data_i, PIXEL_COUNT, 1),
+                NetworkState state = feedforward(mini_batch.col(data_i)(Eigen::seq(1, PIXEL_COUNT + 1)),
                                                                                static_cast<unsigned int>(mini_batch(0, data_i)));
                 Deltas deltas = backpropagation(state);
 
@@ -237,8 +183,42 @@ void Network::train() {
 
         // Finally - test the model against testing data.
         int n_tests = 500;
-        unsigned int correct = test_model(n_tests);
+        unsigned int correct = test_network(n_tests);
         float percentage = static_cast<float>(correct) / n_tests * 100;
         cout << "Correctly classified " << correct << "/" << n_tests << "( " << percentage << "% )" << " digits" << endl;
     }
+}
+
+int Network::classify(Eigen::Ref<const Eigen::VectorXf> input) const {
+    const NetworkState s = feedforward(input(Eigen::seq(1, PIXEL_COUNT + 1)), static_cast<int>(input(0)));
+
+    Eigen::Index predicted_label;
+    s.output.maxCoeff(&predicted_label);
+
+    return static_cast<int>(predicted_label);
+}
+
+unsigned int Network::test_network(unsigned int n) const {
+    Eigen::MatrixXf tests = dataset_.get_testing_data(n);
+
+    unsigned int correct = 0;
+
+    for (int image_i = 0; image_i < n; image_i++) {
+        // 1. Extract label and image data
+        int label = static_cast<int>(tests(0, image_i));
+
+        // Feedforward data and get the state of the network.
+        Eigen::VectorXf image_data = tests.block(1, image_i, PIXEL_COUNT, 1);
+        NetworkState state = feedforward(image_data, label);
+
+        // Get index of the highest activation.
+        Eigen::Index predicted_label;
+        state.output.maxCoeff(&predicted_label);
+
+        // Compare prediciton to label.
+        if (static_cast<unsigned int>(predicted_label) == label) {
+            correct++;
+        }
+    }
+    return correct;
 }

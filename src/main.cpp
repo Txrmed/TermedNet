@@ -13,13 +13,9 @@ int main() {
 
     constexpr Hyperparams parameters{10, 2, 60000, 10000, 2};
 
-    filesystem::path exe_path = filesystem::read_symlink("/proc/self/exe");
-    std::cout << "Full path: " << exe_path << std::endl;
-    std::cout << "Directory: " << exe_path.parent_path() << std::endl;
-    cout << exe_path.parent_path().parent_path() << endl;
+    Dataset dataset;//("mnist");
 
-    //const Dataset dataset;
-
+    dataset.load_custom();
     // Network network(neurons, parameters, dataset);
     // network.train();
 

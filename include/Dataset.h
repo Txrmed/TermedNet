@@ -8,6 +8,7 @@
 #include<Eigen/Dense>
 #include<fstream>
 #include<iostream>
+#include <filesystem>
 
 #define PIXEL_COUNT 784
 
@@ -31,40 +32,73 @@ struct DataFiles {
 // Handle loading the MNIST Dataset into a cpp readable format.
 class Dataset {
 
+    std::string dataset_name_;
+
+    std::filesystem::path data_path_ = "/home/termed/trelemorele/sidehoes/neuralnetworks/data/";
+
     // Amount of neurons in the input layer.
     const unsigned int input_layer_n = 0;
 
     // Amount of training images.
-    const unsigned int n_training_img = 0;
+    const unsigned int n_training_img = 60000;
 
     // Amount of testing images.
-    const unsigned int n_testing_img = 0;
+    const unsigned int n_testing_img = 10000;
 
+    // Data from the MNIST dataset
     Eigen::MatrixXf learning_data_;
     Eigen::MatrixXf testing_data_;
+
+    // Custom data drawn in paint :)
+    Eigen::MatrixXf custom_data_;
 
     unsigned int current_index = 0;
 
     //void validate_file_headers(std::ifstream& train_images, std::ifstream& train_labels, std::ifstream& test_images, ifstream& test_labels);
 
     // Some function to find files in /data/mnist/ dir
-    DataFiles find_files();
+    // DataFiles find_files();
 
 public:
 
-    // Load entire MNIST set into learning_data_ and test_data_.
-    void load_data();
+    // Dataset(const std::string& dataset_name);
 
-    // Randomy shuffle learning data.
+    /**
+     * @brief Load entire MNIST dataset into respective Matrix
+     */
+    void load_dataset();
+
+    /**
+     * @brief Load every image in the /data/custom/ catalog.
+     */
+    void load_custom();
+
+    /**
+     * @brief Shuffle the learning_data_ matrix randomly.
+     */
     void shuffle();
 
-    // Get a mini batch of images.
+    /**
+     * @brief Get a mini batch of learning images with labels.
+     *
+     * @param amount Amount of images in the minibatch.
+     *
+     * @returns A Eigen::Ref to a Matrix of images.
+     */
     Eigen::Ref<const Eigen::MatrixXf> get_mini_batch(const unsigned int& amount);
 
-    // Get testing data to test our model on.
+    /**
+     * @brief Get n testing images.
+     *
+     * @param n Amount of testing images.
+     *
+     * @returns An Eigen::Ref to a matrix with testing data.
+     */
     [[nodiscard]] Eigen::Ref<const Eigen::MatrixXf> get_testing_data(unsigned int n) const;
 
-    // Return the index to 0.
+    /**
+     * @brief Return the index of the column of learning_data. Call this function after exhausting all training images.
+     */
     void set_return(){ current_index = 0; }
 
 };
