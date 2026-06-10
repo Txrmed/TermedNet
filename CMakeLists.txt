@@ -1,7 +1,7 @@
 include(FetchContent)
 
 cmake_minimum_required(VERSION 4.1)
-project(neuralnetworks)
+project(TermedNet)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -12,12 +12,16 @@ FetchContent_Declare(
         GIT_TAG 5.0.0
 )
 
-set(SOURCES src/main.cpp src/Network.cpp src/Dataset.cpp)
 
-add_executable(neuralnetworks ${SOURCES})
+set(SOURCES src/main.cpp src/MLP.cpp src/Dataset.cpp)
 
-target_include_directories(neuralnetworks PRIVATE include)
+add_executable(TermedNet ${SOURCES})
+
+target_compile_options(TermedNet PRIVATE -march=native -O3)
+
+target_include_directories(TermedNet PRIVATE include)
 
 FetchContent_MakeAvailable(Eigen)
-target_link_libraries(neuralnetworks PRIVATE Eigen3::Eigen)
+target_link_libraries(TermedNet PRIVATE Eigen3::Eigen)
+
 
